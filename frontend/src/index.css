@@ -1,0 +1,15 @@
+
+@import "tailwindcss";
+@plugin "daisyui";
+
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body{
+  background-color: rgb(2, 17, 31);
+  color:white;
+  font-family:sans-serif;
+  overflow:hidden;
+}
