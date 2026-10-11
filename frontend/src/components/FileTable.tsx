@@ -3,25 +3,32 @@ import "daisyui"
 import {RecordMessage,CopyMessage} from "../components/Message"
 
 
-interface F_Table{
-    files:MonitoredFile[];
-    onVerify:(id:number)=>void;
-    onDelete:(file_name:string)=>void;
-    onUpload:(file:File)=>Promise<void>; 
-    error:string | null;
-    loading:boolean;
+
+interface F_Table {
+    files: MonitoredFile[];
+    onVerify: (id: number) => void;
+    onDelete: (file_name: string) => void;
+    onUpload: (file: File) => Promise<void>;
+    error: string | null;
+    loading: boolean;
+
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
 }
 
-const FileTable=({files,onVerify,onDelete,loading}:F_Table)=> {
-   
+
+const FileTable=({files,onVerify,onDelete,loading,currentPage,totalPages,onPageChange}:F_Table)=> {
     return (
         <>
-        {loading?<p  className="loading loading-spinner loading-md">Loading Please Wait....</p>:''}
-        {files.length!=0 ? 
+        {loading?<button className="btn btn-square">
+  <span className="loading loading-spinner" style={{"margin":"1rem"}}></span>
+</button>:''}
+        {files.length==0 ? 
+        <RecordMessage />:(
         <table className="table-section">
             <thead>
-                <tr className="table-header">
-                    <th>ID</th>
+                <tr>
                     <th>FILE NAME</th>
                     <th>HASH VALUE</th>
                     <th>UPLOAD TIME</th>
@@ -34,7 +41,6 @@ const FileTable=({files,onVerify,onDelete,loading}:F_Table)=> {
                 {files.map((file)=>(
     
                     <tr key={file.id}>
-                        <td>{file.id}</td>
                         <td>{file.file_name}</td>
                         <td>
                             <div className="hash-container">
@@ -60,7 +66,48 @@ const FileTable=({files,onVerify,onDelete,loading}:F_Table)=> {
             }
             </tbody>
         </table>
-        :<RecordMessage />}
+        )
+        }
+        
+{totalPages > 1 && (
+    <div className="pagination">
+        <button
+            className="btn"
+            disabled={currentPage === 1}
+            onClick={() => onPageChange(currentPage - 1)}
+        >
+           Previous
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+            page => (
+            <button
+                key={page}
+                className={`btn ${
+                  currentPage === page ? "btn-primary" : "btn-ghost"
+                }`}
+                onClick={() => onPageChange(page)}
+                aria-current={currentPage === page ? "page" : undefined}
+
+            >
+                {page}
+            </button>
+        ))}
+
+        <button
+            className="btn"
+            disabled={currentPage === totalPages}
+            onClick={() => onPageChange(currentPage + 1)}
+        >
+           next
+        </button>
+
+        <span className="page-info">
+            Page {currentPage} of {totalPages}
+          </span>
+
+    </div>
+)}
         </>
     )
 }

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.database import models
 from app.database.database import init_db
 from app.routes.files import router
+from app.routes.logs import routerlog
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -19,6 +20,7 @@ app=FastAPI(lifespan=lifespan)
 init_db() 
 
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -28,3 +30,4 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(routerlog)

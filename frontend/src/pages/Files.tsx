@@ -1,29 +1,73 @@
-import {getFiles,verifyFile,deleteFile,uploadFile} from "../services/api";
+import {verifyFile,deleteFile,uploadFile,fetchFilesPage, fetchFilesCount} from "../services/api";
 import FileTable from "../components/FileTable";             
-import { useState,useEffect } from "react";
+import { useState,useEffect ,useRef} from "react";
 import type { MonitoredFile } from "../types/file";
 import UploadFile from "../components/UploadFile"
 import {ErrorMessage, SuccessMessage} from "../components/Message"
-
+import "./Files.css"
 const Files= () => {
         const [files,setFiles]=useState<MonitoredFile[]>([]);
         const [error,setError]=useState<string | null>('')
         const [message,setMessage]=useState<string | null>('')
         const [loading,setLoading]=useState<boolean>(false)
-        useEffect(()=>{
-            const data=async()=>{
-            const result=await getFiles();
-            setFiles(result);
+        const [currentPage, setCurrentPage] = useState(1);
+        const [totalFiles, setTotalFiles] = useState(0);
+        const filesContainerRef = useRef<HTMLDivElement>(null);
+
+        const PAGE_SIZE = 10;
+        const totalPages = Math.ceil(totalFiles / PAGE_SIZE);
+        const offset = (currentPage - 1) * PAGE_SIZE;
+        
+        const refreshFiles = async (page: number = currentPage) => {
+        const [filesResult, countResult] = await Promise.all([
+            fetchFilesPage(PAGE_SIZE, (page - 1) * PAGE_SIZE),
+            fetchFilesCount()
+        ]);
+
+        setFiles(filesResult);
+        setTotalFiles(countResult.total);
+        };
+            
+        useEffect(() => {
+        filesContainerRef.current?.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
+        }, [currentPage]);
+
+        useEffect(() => {
+            const loadFiles = async () => {
+                setLoading(true);
+
+                try {
+                    const [filesResult, countResult] = await Promise.all([
+                        fetchFilesPage(PAGE_SIZE, (currentPage - 1) * PAGE_SIZE),
+                        fetchFilesCount()
+                    ]);
+
+                    setFiles(filesResult);
+                    setTotalFiles(countResult.total);
+                    setError(null);
+                } catch (err) {
+                    setError(
+                        err instanceof Error
+                            ? `Failed to load files: ${err.message}`
+                            : "Failed to load files"
+                    );
+                } finally {
+                    setLoading(false);
+                }
             };
-            data();
-        },[]);
+
+    loadFiles();
+}, [currentPage]);
+
 
         const handleVerify=async(id:number)=>{
             setLoading(true)
             try{
                 await verifyFile(id);
-                const result=await getFiles();
-                setFiles(result);
+                await refreshFiles();
                 setError(null)
                 setMessage("File Verified Successfully!")
              setTimeout(() => {
@@ -44,8 +88,14 @@ const Files= () => {
             setLoading(true)
             try{
                 await deleteFile(encodeURIComponent(file_name));
-                const result=await getFiles();
-                setFiles(result);
+                const remainingCount = (await fetchFilesCount()).total;
+                const lastPage = Math.max(1, Math.ceil(remainingCount / PAGE_SIZE));
+
+                if (currentPage > lastPage) {
+                    setCurrentPage(lastPage);
+                } else {
+                    await refreshFiles();
+                }
                 setError(null)
                 setMessage("File Deleted Successfully!")
              setTimeout(() => {
@@ -65,8 +115,8 @@ const Files= () => {
             setLoading(true)
             try{
                 await uploadFile(file);
-                const result=await getFiles();
-                setFiles(result);
+                setCurrentPage(1);
+                await refreshFiles(1);
                 setError(null)
                 setMessage("File Uploaded Successfully!")
              setTimeout(() => {
@@ -84,7 +134,7 @@ const Files= () => {
     } 
 
   return (
-    <div className="app-layout">
+    <div className="file-layout">
     <header>
         <h1>Files</h1>
         <p>Monitor your files and verify their integrity using SHA-256 hashes.</p>
@@ -98,9 +148,21 @@ const Files= () => {
 
         {error &&<ErrorMessage error={error} /> }
         <SuccessMessage error={error} message={message}/>
-    <section className="file-section">
-        <h2>Monitored Files</h2>
-        <FileTable files={files} onVerify={handleVerify} onDelete={handleDelete}  onUpload={handleUpload} error={error} loading={loading} />
+    <section className="file-section"  ref={filesContainerRef}>
+
+        
+        <FileTable
+            files={files}
+            onVerify={handleVerify}
+            onDelete={handleDelete}
+            onUpload={handleUpload}
+            error={error}
+            loading={loading}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+        />
+
     </section>
     </main>
     </div>

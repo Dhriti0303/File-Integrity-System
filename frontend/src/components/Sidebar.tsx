@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { NavLink } from "react-router-dom"
 const Sidebar = () => {
   return (
     <>
@@ -6,8 +6,8 @@ const Sidebar = () => {
         <h1>File Integrity System</h1>
         <hr />
         <nav className="navigation-bar">
-            <Link to="/files">Files</Link>
-            <Link to="Logs">Logs</Link>
+            <NavLink to="/files">Files</NavLink>
+            <NavLink to="Logs">Logs</NavLink>
             </nav>
         </aside>
     </>

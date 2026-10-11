@@ -10,7 +10,10 @@ import os
 from app.database import models
 from pathlib import Path
 
-async def upload(db, file: UploadFile):
+async def upload( file: UploadFile,db):
+    print("FILE OBJECT:", repr(file))
+    print("FILE TYPE:", type(file))
+    print("FILENAME:", getattr(file, "filename", "NO FILENAME ATTRIBUTE"))
     UPLOAD_DIR = Path("app/uploads/monitored_files")
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     file_path = UPLOAD_DIR / file.filename
@@ -32,7 +35,7 @@ async def upload(db, file: UploadFile):
         )
     latest_file=add_file(file,db)
     file_uploaded(file.id,db,generated_hash,file.file_name)
-    return "File uploaded successfully!"
+    return "File uploaded SUCCESSfully!"
 
 def verify(file_path:FilePath, stored_hash):
     if os.path.exists(file_path):
@@ -180,7 +183,7 @@ def file_uploaded(id:int,db,hash,name):
         new_hash=None,
         detected_at=datetime.now(timezone.utc),
         action="Uploaded",
-        change_type="-"
+        change_type="SUCCESS"
     )
     add_file_change(fileN,db)
     db.commit()
@@ -194,7 +197,7 @@ def file_deleted(name,db,hash,id):
             new_hash=None,
             detected_at=datetime.now(timezone.utc),
             action="Deleted",
-            change_type="-"
+            change_type="SUCCESS"
         )
     add_file_change(fileN,db)
     db.commit()

@@ -6,7 +6,7 @@ import "./App.css"
 const App = () => {
   return (
     <BrowserRouter>
-    < div className="files-layout">
+    < div className="app-layout">
       <Sidebar/>
      <Routes>
        <Route path="/" element={<Files />}/>
